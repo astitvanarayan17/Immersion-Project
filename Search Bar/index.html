@@ -10,21 +10,22 @@
 
 <body>
     <div class="container">
-        <div class="navbar">
-            <div><strong>Product Search</strong></div>
-            <div>
-                <input type="text" id="searchInput" placeholder="Search for products...">
-                <button onclick="searchProducts()">Search</button>
-                <select id="sortSelect" onchange="searchProducts()">
-                    <option value="">Sort by Price</option>
-                    <option value="asc">Price: Low to High</option>
-                    <option value="desc">Price: High to Low</option>
-                </select>
-                <button id="darkModeToggle" onclick="toggleDarkMode()">🌙 Dark Mode</button>
-
-
-            </div>
-        </div>
+    <div class="navbar">
+        <div><strong>Product Search</strong></div>
+    <div>
+        <input type="text" id="searchInput" placeholder="Search for products...">
+        <button onclick="searchProducts()">Search</button>
+        <select id="sortSelect" onchange="searchProducts()">
+        <option value="">Sort by Price</option>
+        <option value="asc">Price: Low to High</option>
+        <option value="desc">Price: High to Low</option>
+    </select>
+        <select id="brandSelect" onchange="searchProducts()">
+        <option value="">All Brands</option>
+    </select>
+        <button id="darkModeToggle" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+    </div>
+</div>
 
     <div id="highlightContainer" class="highlight"></div>
     <div class="products" id="productContainer"></div>

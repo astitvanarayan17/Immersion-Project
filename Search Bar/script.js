@@ -59,15 +59,41 @@ async function searchProducts() {
 async function searchProducts() {
   const query = document.getElementById('searchInput').value.trim();
   const sortOrder = document.getElementById('sortSelect').value;
-  const url = query 
+  const selectedBrand = document.getElementById('brandSelect').value;
+
+  const url = query
     ? `https://dummyjson.com/products/search?q=${encodeURIComponent(query)}`
     : `https://dummyjson.com/products`;
+
   let products = await fetchProducts(url);
+
+  // Filter by brand if selected
+  if (selectedBrand) {
+    products = products.filter(p => p.brand === selectedBrand);
+  }
+
   products = sortProducts(products, sortOrder);
-  renderProducts(products);
+  renderProducts(products, !!query);
+}
+async function populateBrands() {
+  const allProducts = await fetchProducts("https://dummyjson.com/products");
+  const brands = [...new Set(allProducts.map(p => p.brand))];
+
+  const brandSelect = document.getElementById('brandSelect');
+  brands.forEach(brand => {
+    const option = document.createElement('option');
+    option.value = brand;
+    option.textContent = brand;
+    brandSelect.appendChild(option);
+  });
 }
 
-window.onload = searchProducts;
+
+window.onload = async function () {
+  await populateBrands();
+  searchProducts();
+};
+
 
 function toggleDarkMode() {
   const body = document.body;
