@@ -1,8 +1,25 @@
 const express = require('express');
-const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const mongoose = require('mongoose');
 const app = express();
+
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/vehicleDB', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.log('MongoDB connection error:', err));
+
+// Vehicle Schema
+const vehicleSchema = new mongoose.Schema({
+    vehicleName: String,
+    price: String,
+    image: String,
+    desc: String,
+    brand: String
+});
+const Vehicle = mongoose.model('Vehicle', vehicleSchema);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -10,8 +27,6 @@ app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 // Serve uploaded images statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-const DATA_FILE = path.join(__dirname, 'data', 'vehicles.json');
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -24,18 +39,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// Helper to read/write JSON
-function readVehicles() {
-    if (!fs.existsSync(DATA_FILE)) return [];
-    return JSON.parse(fs.readFileSync(DATA_FILE));
-}
-function writeVehicles(data) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
-
 // Home - List all vehicles
-app.get('/', (req, res) => {
-    const vehicles = readVehicles();
+app.get('/', async (req, res) => {
+    const vehicles = await Vehicle.find();
     res.render('index', { vehicles });
 });
 
@@ -45,78 +51,60 @@ app.get('/vehicle/new', (req, res) => {
 });
 
 // Add vehicle (with image upload)
-app.post('/vehicle', upload.single('image'), (req, res) => {
-    const vehicles = readVehicles();
+app.post('/vehicle', upload.single('image'), async (req, res) => {
     const { vehicleName, price, desc, brand } = req.body;
     const imagePath = req.file ? '/uploads/' + req.file.filename : '';
-    vehicles.push({ id: Date.now(), vehicleName, price, image: imagePath, desc, brand });
-    writeVehicles(vehicles);
+    await Vehicle.create({ vehicleName, price, image: imagePath, desc, brand });
     res.redirect('/');
 });
 
 // Show form to edit vehicle
-app.get('/vehicle/edit/:id', (req, res) => {
-    const vehicles = readVehicles();
-    const vehicle = vehicles.find(v => v.id == req.params.id);
+app.get('/vehicle/edit/:id', async (req, res) => {
+    const vehicle = await Vehicle.findById(req.params.id);
     res.render('edit', { vehicle });
 });
 
 // Update vehicle (with image upload)
-app.post('/vehicle/edit/:id', upload.single('image'), (req, res) => {
-    let vehicles = readVehicles();
-    vehicles = vehicles.map(v => {
-        if (v.id == req.params.id) {
-            const updated = { ...v, ...req.body };
-            if (req.file) updated.image = '/uploads/' + req.file.filename;
-            return updated;
-        }
-        return v;
-    });
-    writeVehicles(vehicles);
+app.post('/vehicle/edit/:id', upload.single('image'), async (req, res) => {
+    const update = { ...req.body };
+    if (req.file) update.image = '/uploads/' + req.file.filename;
+    await Vehicle.findByIdAndUpdate(req.params.id, update);
     res.redirect('/');
 });
 
 // Delete vehicle
-app.post('/vehicle/delete/:id', (req, res) => {
-    let vehicles = readVehicles();
-    vehicles = vehicles.filter(v => v.id != req.params.id);
-    writeVehicles(vehicles);
+app.post('/vehicle/delete/:id', async (req, res) => {
+    await Vehicle.findByIdAndDelete(req.params.id);
     res.redirect('/');
 });
 
 // REST API endpoints (JSON)
-app.get('/api/vehicles', (req, res) => res.json(readVehicles()));
-app.get('/api/vehicles/:id', (req, res) => {
-    const vehicle = readVehicles().find(v => v.id == req.params.id);
+app.get('/api/vehicles', async (req, res) => {
+    const vehicles = await Vehicle.find();
+    res.json(vehicles);
+});
+app.get('/api/vehicles/:id', async (req, res) => {
+    const vehicle = await Vehicle.findById(req.params.id);
     if (!vehicle) return res.status(404).json({ error: 'Not found' });
     res.json(vehicle);
 });
-app.post('/api/vehicles', upload.single('image'), (req, res) => {
-    const vehicles = readVehicles();
+app.post('/api/vehicles', upload.single('image'), async (req, res) => {
     const { vehicleName, price, desc, brand } = req.body;
     const imagePath = req.file ? '/uploads/' + req.file.filename : '';
-    const newVehicle = { id: Date.now(), vehicleName, price, image: imagePath, desc, brand };
-    vehicles.push(newVehicle);
-    writeVehicles(vehicles);
+    const newVehicle = await Vehicle.create({ vehicleName, price, image: imagePath, desc, brand });
     res.status(201).json(newVehicle);
 });
-app.put('/api/vehicles/:id', upload.single('image'), (req, res) => {
-    let vehicles = readVehicles();
-    let idx = vehicles.findIndex(v => v.id == req.params.id);
-    if (idx === -1) return res.status(404).json({ error: 'Not found' });
-    let updated = { ...vehicles[idx], ...req.body };
-    if (req.file) updated.image = '/uploads/' + req.file.filename;
-    vehicles[idx] = updated;
-    writeVehicles(vehicles);
-    res.json(vehicles[idx]);
+app.put('/api/vehicles/:id', upload.single('image'), async (req, res) => {
+    const update = { ...req.body };
+    if (req.file) update.image = '/uploads/' + req.file.filename;
+    const vehicle = await Vehicle.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!vehicle) return res.status(404).json({ error: 'Not found' });
+    res.json(vehicle);
 });
-app.delete('/api/vehicles/:id', (req, res) => {
-    let vehicles = readVehicles();
-    let idx = vehicles.findIndex(v => v.id == req.params.id);
-    if (idx === -1) return res.status(404).json({ error: 'Not found' });
-    const deleted = vehicles.splice(idx, 1);
-    writeVehicles(vehicles);
-    res.json(deleted[0]);
+app.delete('/api/vehicles/:id', async (req, res) => {
+    const vehicle = await Vehicle.findByIdAndDelete(req.params.id);
+    if (!vehicle) return res.status(404).json({ error: 'Not found' });
+    res.json(vehicle);
 });
 
 app.listen(3000, () => console.log('Server running on http://localhost:3000'));

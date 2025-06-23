@@ -6,5 +6,13 @@
     "image": "/uploads/1750652730430-Range.jpg",
     "desc": "The Range Rover is a luxury SUV",
     "brand": "Land Rover"
+  },
+  {
+    "id": 1750653711910,
+    "vehicleName": "Verna",
+    "price": "Rs.15 Lakh",
+    "image": "/uploads/1750653711897-verna-facelift-exterior-right-front-three-quarter-100.avif",
+    "desc": "compact sedan known for its futuristic and unconventional design, offering a balance of style, features, and performance",
+    "brand": "Hyundai"
   }
 ]
