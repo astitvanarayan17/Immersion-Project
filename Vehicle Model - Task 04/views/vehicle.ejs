@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Vehicle</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <h1>Add Vehicle</h1>
+    <form action="/vehicle" method="POST" enctype="multipart/form-data">
+    <input name="vehicleName" placeholder="Name" required><br>
+    <input name="price" placeholder="Price" required><br>
+    <input type="file" name="image" accept="image/*" required><br>
+    <input name="desc" placeholder="Description" required><br>
+    <input name="brand" placeholder="Brand" required><br>
+    <button type="submit">Add</button>
+</form>
+    </form>
+    <a href="/">Back</a>
+</body>
+</html>

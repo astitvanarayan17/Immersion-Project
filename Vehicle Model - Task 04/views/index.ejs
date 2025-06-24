@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vehicles</title>
+    <link rel="stylesheet" href="/style.css">
+    
+</head>
+<body>
+<a href="/logout" style="float:right; margin: 1em;">Logout</a>
+<div class="container">
+    <h1>Vehicles</h1>
+    <a href="/vehicle/new">Add Vehicle</a>
+    <table>
+        <tr>
+            <th>Name</th><th>Price</th><th>Image</th><th>Desc</th><th>Brand</th><th>Actions</th>
+        </tr>
+        <% vehicles.forEach(v => { %>
+        <tr>
+            <td><%= v.vehicleName %></td>
+            <td><%= v.price %></td>
+            <td>
+                <% if (v.image) { %>
+                    <img src="<%= v.image %>" alt="vehicle">
+                <% } %>
+            </td>
+            <td><%= v.desc %></td>
+            <td><%= v.brand %></td>
+            <td>
+                <a href="/vehicle/edit/<%= v.id %>">Edit</a>
+                <form action="/vehicle/delete/<%= v.id %>" method="POST" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Delete?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+        <% }) %>
+    </table>
+</div>
+</body>
+</html>
